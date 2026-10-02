@@ -1,0 +1,35 @@
+name: Build ThorVG Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "ThorVG tag"
+        required: true
+        type: string
+
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      
+      - name: Install Meson and Ninja
+        run: python -m pip install meson ninja
+
+      - uses: actions/checkout@7
+        with:
+          repository: thorvg/thorvg
+          ref: ${{ inputs.tag }}
+      # build
+      # put iit into bundle
+
+    
+  # put it into bundle
+  # publish a release
