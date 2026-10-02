@@ -23,17 +23,15 @@ jobs:
       - name: Install Meson and Ninja
         run: python -m pip install meson ninja
 
-      - uses: actions/checkout@7
+      - uses: actions/checkout@v7
         with:
           repository: thorvg/thorvg
           ref: ${{ inputs.tag }}
 
       - name: Configure
         run: meson setup build -Dengines=sw,gl -Dstatic=true -Dbuildtype=release -Ddefault_library=static
-        
-      - run: meson compile -C build
 
-      # build
+      - run: meson compile -C build
       # put iit into bundle
 
     
