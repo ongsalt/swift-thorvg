@@ -27,6 +27,12 @@ jobs:
         with:
           repository: thorvg/thorvg
           ref: ${{ inputs.tag }}
+
+      - name: Configure
+        run: meson setup build -Dengines=sw,gl -Dstatic=true -Dbuildtype=release -Ddefault_library=static
+        
+      - run: meson compile -C build
+
       # build
       # put iit into bundle
 
