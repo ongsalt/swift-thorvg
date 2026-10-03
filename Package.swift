@@ -25,14 +25,14 @@ let package = Package(
     name: "swift-thorvg",
     products: [
         .library(
-            name: "swift-thorvg",
-            targets: ["swift_thorvg"]
+            name: "SwiftThorVG",
+            targets: ["SwiftThorVG"]
         )
     ],
     targets: [
         thorVGNativeTarget,
         .target(
-            name: "swift_thorvg",
+            name: "SwiftThorVG",
             dependencies: [
                 "ThorVGNative"
             ],
