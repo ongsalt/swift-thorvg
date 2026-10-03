@@ -1,51 +1,78 @@
-import shutil
+import hashlib
+import json
 import os
 from pathlib import Path
-import json
+import shutil
+import sys
+
 
 tag = os.environ["TAG"]
-platform = os.environ["PLATFORM"].lower()
-# arch = os.environ["ARCH"]
-arch = "x86_64"
-
-target = f"{platform}-{arch}"
-
+artifacts = Path("artifacts")
 supported_triples = {
-    "linux-x86_64" : "x86_64-unknown-linux-gnu"
+    "linux-x86_64": "x86_64-unknown-linux-gnu",
+    "linux-arm64": "arm64-unknown-linux-gnu",
+    "windows-x86_64": "x86_64-unknown-windows-msvc",
+    "windows-arm64": "arm64-unknown-windows-msvc",
 }
 
-def create_info_json():
-    version = tag[1:]
-    content = {
+
+def create_artifact_bundle():
+    platform = os.environ["PLATFORM"].lower()
+    target = f"{platform}-{os.environ['ARCH']}"
+    bundle = artifacts / f"thorvg-{tag}-{target}.artifactbundle"
+
+    pattern = "*thorvg*.lib" if platform == "windows" else "libthorvg*.a"
+    library = next(Path("thorvg/build/src").glob(pattern))
+
+    shutil.copytree("Bridge/include", bundle / "include", dirs_exist_ok=True)
+    shutil.copy2(library, bundle / library.name)
+    if platform == "windows":
+        module_map = bundle / "include/module.modulemap"
+        module_map.write_text(
+            module_map.read_text(encoding="utf-8").replace(' link "m"\n', ""),
+            encoding="utf-8",
+        )
+
+    info = {
         "schemaVersion": "1.0",
         "artifacts": {
             "ThorVGNative": {
                 "type": "staticLibrary",
-                "version": version,
+                "version": tag.removeprefix("v"),
                 "variants": [{
-                    "path": "libthorvg.a",
+                    "path": library.name,
                     "supportedTriples": [supported_triples[target]],
                     "staticLibraryMetadata": {
                         "headerPaths": ["include"],
-                        "moduleMapPath": "include/module.modulemap"
-                    }
-                }]
-            }
-        }
+                        "moduleMapPath": "include/module.modulemap",
+                    },
+                }],
+            },
+        },
     }
+    (bundle / "info.json").write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
+    
+    shutil.make_archive(str(bundle), "zip", root_dir=artifacts, base_dir=bundle.name)
 
-    with open("bundle/info.json", "w", encoding="utf-8") as f:
-        json.dump(content, f, indent=2, ensure_ascii=False)
+
+def create_artifact_bundle_index():
+    archives = []
+    for target, triple in supported_triples.items():
+        archive = artifacts / f"thorvg-{tag}-{target}.artifactbundle.zip"
+        archives.append({
+            "fileName": archive.name,
+            "checksum": hashlib.sha256(archive.read_bytes()).hexdigest(),
+            "supportedTriples": [triple],
+        })
+        
+    index = {"schemaVersion": "1.0", "archives": archives}
+    (artifacts / f"thorvg-{tag}.artifactbundleindex").write_text(
+        json.dumps(index, indent=2) + "\n", encoding="utf-8",
+    )
 
 
-def create_artifact_bundle():
-    Path("bundle").mkdir()
-    create_info_json()
-
-    shutil.copytree("Bridge/include", "bundle/include")
-
-    shutil.copy2("thorvg/build/src/libthorvg-1.a", "bundle/")
-
-    shutil.make_archive(f"artifacts/thorvg-{tag}-{target}.artifactbundle", "zip", root_dir=".", base_dir="bundle")
-
-create_artifact_bundle()
+if __name__ == "__main__":
+    if "--index" in sys.argv:
+        create_artifact_bundle_index()
+    else:
+        create_artifact_bundle()

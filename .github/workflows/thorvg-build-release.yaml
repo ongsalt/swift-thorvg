@@ -8,54 +8,71 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
+concurrency:
+  group: thorvg-release-${{ inputs.tag }}
+  cancel-in-progress: false
 
 jobs:
   build:
+    name: Build ${{ matrix.platform }}-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+          - os: windows-2022
+            platform: windows
+            arch: x86_64
+          - os: windows-11-arm
+            platform: windows
+            arch: arm64
+    uses: ./.github/workflows/thorvg-build.yaml
+    with:
+      tag: ${{ inputs.tag }}
+      os: ${{ matrix.os }}
+      platform: ${{ matrix.platform }}
+      arch: ${{ matrix.arch }}
+
+  release:
+    name: Publish all bundles
+    needs: build
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        # Todo properly dispatch this
-        # os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
     steps:
+      - uses: actions/checkout@v7
+
       - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
-      
-      - name: Install Meson and Ninja
-        run: python -m pip install meson ninja
 
-      - uses: actions/checkout@v7
-
-      - uses: actions/checkout@v7
+      - name: Download all bundles
+        uses: actions/download-artifact@v4
         with:
-          repository: thorvg/thorvg
-          ref: ${{ inputs.tag }}
-          path: thorvg
+          pattern: thorvg-*
+          path: artifacts
+          merge-multiple: true
 
-      - name: Configure
-        working-directory: thorvg
-        run: meson setup build "-Dengines=cpu,gl" -Dstatic=true -Dbuildtype=release -Ddefault_library=static
-
-      - name: Build
-        working-directory: thorvg
-        run: meson compile -C build
-
-      - name: Package
+      - name: Generate artifact bundle index
         env:
           TAG: ${{ inputs.tag }}
-          PLATFORM: ${{ runner.os }}
-          # ARCH: ${{ runner.arch }}
-        run: python Scripts/ci.py
+        run: python Scripts/ci.py --index
 
-      - name: Create Release
+      - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ inputs.tag }}
         run: |
-          gh release create "$TAG" artifacts/* \
+          gh release create "$TAG" artifacts/*.artifactbundle.zip artifacts/*.artifactbundleindex \
+            --target "$GITHUB_SHA" \
             --title "ThorVG $TAG build" \
             --generate-notes
