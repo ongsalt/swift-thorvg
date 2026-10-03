@@ -11,8 +11,8 @@ artifacts = Path("artifacts")
 supported_triples = {
     "linux-x86_64": "x86_64-unknown-linux-gnu",
     "linux-arm64": "arm64-unknown-linux-gnu",
-    "windows-x86_64": "x86_64-unknown-windows-msvc",
-    "windows-arm64": "arm64-unknown-windows-msvc",
+    # "windows-x86_64": "x86_64-unknown-windows-msvc",
+    # "windows-arm64": "arm64-unknown-windows-msvc",
 }
 
 
