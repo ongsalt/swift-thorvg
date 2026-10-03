@@ -1,0 +1,6 @@
+module CThorVG {
+ requires cplusplus
+ header "bridge.hpp"
+ link "m"
+ export *
+}
