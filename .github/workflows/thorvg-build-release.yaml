@@ -1,4 +1,4 @@
-name: Build ThorVG Release
+name: Build ThorVG
 
 on:
   workflow_dispatch:

@@ -4,14 +4,9 @@ from pathlib import Path
 import json
 
 tag = os.environ["TAG"]
-platform = os.environ["PLATFORM"]
+platform = os.environ["PLATFORM"].lower()
 # arch = os.environ["ARCH"]
 arch = "x86_64"
-
-if "windows" in platform:
-    platform = "windows"
-elif "ubuntu" in platform:
-    platform = "linux"
 
 target = f"{platform}-{arch}"
 
