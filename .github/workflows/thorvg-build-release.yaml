@@ -11,6 +11,9 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
+
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -49,10 +52,10 @@ jobs:
         run: python Scripts/ci.py
 
       - name: Create Release
-        uses: ncipollo/release-action@v1
-        with:
-          name: ThorVG ${{ inputs.tag }} build
-          tag: ${{ inputs.tag }}
-          artifacts: artifacts/*
-          artifactErrorsFailBuild: true
-        
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release create "$TAG" artifacts/* \
+            --title "ThorVG $TAG build" \
+            --generate-notes
