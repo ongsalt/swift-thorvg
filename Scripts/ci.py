@@ -18,14 +18,17 @@ supported_triples = {
 
 def create_artifact_bundle():
     platform = os.environ["PLATFORM"].lower()
-    target = f"{platform}-{os.environ['ARCH']}"
+    arch = os.environ['ARCH']
+    target = f"{platform}-{arch}"
+
     bundle = artifacts / f"thorvg-{tag}-{target}.artifactbundle"
 
-    pattern = "*thorvg*.lib" if platform == "windows" else "libthorvg*.a"
-    library = next(Path("thorvg/build/src").glob(pattern))
+    library = Path("thorvg/build/src/libthorvg-1.a")
 
     shutil.copytree("Bridge/include", bundle / "include", dirs_exist_ok=True)
     shutil.copy2(library, bundle / library.name)
+
+    # dont link libm on windows
     if platform == "windows":
         module_map = bundle / "include/module.modulemap"
         module_map.write_text(
@@ -50,7 +53,8 @@ def create_artifact_bundle():
             },
         },
     }
-    (bundle / "info.json").write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
+    info_path = bundle / "info.json"
+    info_path.write_text(json.dumps(info) + "\n", encoding="utf-8")
     
     shutil.make_archive(str(bundle), "zip", root_dir=artifacts, base_dir=bundle.name)
 
@@ -66,9 +70,8 @@ def create_artifact_bundle_index():
         })
         
     index = {"schemaVersion": "1.0", "archives": archives}
-    (artifacts / f"thorvg-{tag}.artifactbundleindex").write_text(
-        json.dumps(index, indent=2) + "\n", encoding="utf-8",
-    )
+    index_path = artifacts / f"thorvg-{tag}.artifactbundleindex"
+    index_path.write_text(json.dumps(index) + "\n", encoding="utf-8",)
 
 
 if __name__ == "__main__":
