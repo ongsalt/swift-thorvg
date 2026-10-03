@@ -13,13 +13,13 @@ permissions:
 
 concurrency:
   group: thorvg-release-${{ inputs.tag }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
     name: Build ${{ matrix.platform }}-${{ matrix.arch }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - os: ubuntu-24.04
