@@ -1,6 +1,5 @@
 module CThorVG {
- requires cplusplus
- header "bridge.hpp"
- link "m"
- export *
+    header "shim.h"
+    link "m"
+    export *
 }

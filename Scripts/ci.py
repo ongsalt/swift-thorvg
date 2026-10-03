@@ -26,6 +26,7 @@ def create_artifact_bundle():
     library = Path("thorvg/build/src/libthorvg-1.a")
 
     shutil.copytree("Bridge/include", bundle / "include", dirs_exist_ok=True)
+    shutil.copy2("thorvg/src/bindings/capi/thorvg_capi.h", bundle / "include")
     shutil.copy2(library, bundle / library.name)
 
     # dont link libm on windows
