@@ -72,7 +72,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TAG: ${{ inputs.tag }}
         run: |
-          gh release create "$TAG" artifacts/*.artifactbundle.zip artifacts/*.artifactbundleindex \
+          gh release create "thorvg-build-$TAG" artifacts/*.artifactbundle.zip artifacts/*.artifactbundleindex \
             --target "$GITHUB_SHA" \
             --title "ThorVG $TAG build" \
             --generate-notes
